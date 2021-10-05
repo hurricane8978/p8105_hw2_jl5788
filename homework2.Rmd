@@ -5,10 +5,12 @@ date: "10/5/2021"
 output: github_document
 ---
 
-```{r}
+```{r,echo=FALSE,message=FALSE}
 library(tidyverse)
 library(readxl)
 ```
+
+# problem 1
 
 ## Read and clean Mr.Trash Wheel sheet
 
@@ -17,17 +19,51 @@ trash_wheel=
   read_excel("data/trash_wheel_collection.xlsx",range="A2:N408") %>%   janitor::clean_names() %>% 
   na.omit(dumpster) %>% 
   mutate_at(vars(sports_balls),funs(round(sports_balls,0)))
+  #mutate(sports_balls=round(pull(trash_wheel,sports_balls)))
 ```
 
 ## Read and clean precipatation data for 2018 and 2019
 ```{r}
 precip2018_df=
   read_excel("data/trash_wheel_collection.xlsx",sheet=5,range="A2:B15") %>% 
-  na.omit()
+  janitor::clean_names() %>% 
+  na.omit() %>% 
+  mutate(year="2018") %>% 
+  select(year,everything())
   
 
 precip2019_df=
   read_excel("data/trash_wheel_collection.xlsx",sheet=4,range="A2:B15") %>% 
-  na.omit()
+  janitor::clean_names() %>% 
+  na.omit() %>% 
+  mutate(year="2019") %>% 
+  select(year,everything())
+
+precip_2018_2019_df=bind_rows(precip2018_df,precip2019_df) %>% 
+  janitor::clean_names() %>% 
+  mutate(month.name[month]) %>% 
+  select(!month) %>% 
+  rename("month"="month.name[month]") %>% 
+  select(year,month,total) 
+
+```
+
+# Problem 2
+
+```{r}
+pols_month_df=
+  read_csv("data/fivethirtyeight_datasets/pols-month.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(mon,into=c("year","month","day"),sep="-") %>% 
+  mutate(month=month.name[as.numeric(month)]) %>%            pivot_longer(prez_gop:rep_dem,names_to="president",values_to ="value") %>%
+  select(!day) %>% 
+  filter(!president == "prez_gop",!president == "prez_dem")
+  
+snp_df=
+  read_csv("data/fivethirtyeight_datasets/snp.csv") %>% 
+  separate(date,into=c("month","day","year"),sep="/") %>% 
+  mutate(month=month.name[as.numeric(month)]) %>% 
+  select(year,everything()) 
+  
 ```
 
