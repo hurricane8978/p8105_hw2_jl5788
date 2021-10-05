@@ -1,0 +1,33 @@
+---
+title: "homework2"
+author: "hurricane"
+date: "10/5/2021"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+## Read and clean Mr.Trash Wheel sheet
+
+```{r}
+trash_wheel=
+  read_excel("data/trash_wheel_collection.xlsx",range="A2:N408") %>%   janitor::clean_names() %>% 
+  na.omit(dumpster) %>% 
+  mutate_at(vars(sports_balls),funs(round(sports_balls,0)))
+```
+
+## Read and clean precipatation data for 2018 and 2019
+```{r}
+precip2018_df=
+  read_excel("data/trash_wheel_collection.xlsx",sheet=5,range="A2:B15") %>% 
+  na.omit()
+  
+
+precip2019_df=
+  read_excel("data/trash_wheel_collection.xlsx",sheet=4,range="A2:B15") %>% 
+  na.omit()
+```
+
