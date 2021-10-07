@@ -20,9 +20,6 @@ trash_wheel=
   janitor::clean_names() %>% 
   na.omit(dumpster) %>% 
   mutate(sports_balls=round(sports_balls,0)) 
-  #mutate_at(vars(sports_balls),funs(round(sports_balls,0)))
-  #mutate(sports_balls=round(pull(trash_wheel,sports_balls)))
-
 ```
 
 
@@ -60,7 +57,7 @@ The first sheet of Mr.Trash Wheel dataset includes `r nrow(trash_wheel)` rows an
 Mr.Trash Wheel dataset also includes every month's precipitation data for 2018 and 2019, which has `r nrow(precip_2018_2019_df) ` rows and `r ncol(precip_2018_2019_df)` columns.
 
 
-The total precipitation in 2018 is `r sum(precip_2018_2019_df[which(precip_2018_2019_df[,1]==2018),3])` and the median number of sports balls in a dumpster in 2019 is `r median(trash_wheel$sports_balls)`
+The total precipitation in 2018 is `r sum(precip_2018_2019_df[which(precip_2018_2019_df[,1]==2018),3])` and the median number of sports balls in a dumpster in 2019 is `r median(trash_wheel$sports_balls)`.
 
 
 
@@ -72,53 +69,75 @@ The total precipitation in 2018 is `r sum(precip_2018_2019_df[which(precip_2018_
 
 # Problem 2
 
-```{r}
+### Import and clean pols-month data
+```{r,message=FALSE}
 pols_month_df=
   read_csv("data/fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
-  separate(mon,into=c("year","month","day"),sep="-") %>% 
+  separate(mon,into=c("year","month","day"),sep="-") %>%
   mutate(year=as.integer(year),month=as.integer(month),day=as.integer(day)) %>% 
-  mutate(month=month.name[as.numeric(month)]) %>%       
-  mutate(president=ifelse(prez_gop==1,"gop","dem")) %>% 
-  select(!prez_gop & !prez_dem) %>% 
+  mutate(month.name[month]) %>%
+  select(-month) %>% 
+  rename("month"="month.name[month]") %>% 
+  mutate(president=ifelse(prez_gop==1,"gop","dem")) %>%
+  select(!prez_gop & !prez_dem & !day) %>% 
+  mutate(month=substring(month,0,3),year=as.numeric(year)) %>% 
+  select(year,month,everything()) %>% 
+  mutate(year=as.integer(year))
+```
   
-  
-  
-  
-  select(!day) %>% 
-  filter(!president == "prez_gop",!president == "prez_dem") %>% 
-  mutate(month=substring(month,0,3),year=as.numeric(year))
-  
+### Import and clean snp data
+```{r,message=FALSE}
 snp_df=
-  read_csv("data/fivethirtyeight_datasets/snp.csv") %>% 
-  separate(date,into=c("year","month","day")) %>% 
-  mutate(month=month.name[as.numeric(month)]) %>% 
-  select(year,everything()) %>% 
-  select(!day) %>% 
-  arrange(year,month) %>% 
-  mutate(year,year=as.numeric(year)+2000)
+  read_csv("data/fivethirtyeight_datasets/snp.csv") %>%
+  mutate(date=lubridate::mdy(date)) %>% 
+  separate(date,into=c("year","month","day"),sep="-") %>% 
+  mutate(year=as.integer(year),month=as.integer(month),day=as.integer(day)) %>% 
+  mutate(month.name[month])%>% 
+  select(-month) %>% 
+  rename("month"="month.name[month]") %>% 
+  mutate(month=substring(month,0,3)) %>% 
+  select(year,month,everything()) %>% 
+  mutate(year=ifelse(year>2049,year-100,year)) %>% 
+  select(year,everything(),-day) %>%
+  arrange(year,month)
 
+```
+
+
+### Import and clean unemplyment data
+```{r,message=FALSE}
 unemployment_df=
   read_csv("data/fivethirtyeight_datasets/unemployment.csv") %>% 
   pivot_longer(2:13, names_to="month",values_to="unemployment_rate"
   ) %>% 
   janitor::clean_names() %>% 
-  arrange(year,month)
+  arrange(year,month) %>% 
+  mutate(year=as.integer(year))
+```
 
-
-  
+### Join three dataset together
+```{r}
 merge_snp_unemployment_df1=
   left_join(pols_month_df,snp_df,by=c("year","month"))
   
 merge_snp_unemployment_df2=
   left_join(merge_snp_unemployment_df1,unemployment_df,by=c("year","month"))
-
 ```
+
+After cleaning, the file "pols-month"  contains `r nrow(pols_month_df)` observations of `r ncol(pols_month_df)` variables related to the number of national politicians who are democratic or republican from 1947 to 2015. 
+
+After cleaning, the file “snp” contains `r nrow(snp_df)` observations of `r ncol(snp_df)` variables related to Standard & Poor’s stock market index (S&P), often used as a representative measure of stock market as a whole.
+
+After cleaning, the file "unemployment" contains `r nrow(unemployment_df)` observations of `r ncol(unemployment_df)` variables.
+
+The three-joint dataset contains `r nrow(merge_snp_unemployment_df2)` observations of `r ncol(merge_snp_unemployment_df2)` variables from 1947 to 2015. The key variables include president, unemployment rate and so on.
+
 
 ## Problem 3
 
 ### Clean baby name
-```{r}
+```{r,message=FALSE}
 baby_name_df=
   read_csv("data/Popular_Baby_Names.csv") %>% 
   janitor::clean_names() %>% 
@@ -132,7 +151,7 @@ baby_name_df=
 ```
 
 ### Well-structured, reader-friendly table 
-```{r}
+```{r,message=FALSE}
 baby_name_df=
   read_csv("data/Popular_Baby_Names.csv") %>% 
   janitor::clean_names() %>% 
@@ -153,7 +172,7 @@ pivot_wider(
 
 
 ## a table showing the most popular name among male children over time
-```{r}
+```{r,message=FALSE}
 baby_name_df=
   read_csv("data/Popular_Baby_Names.csv") %>% 
   janitor::clean_names() %>% 
@@ -194,8 +213,7 @@ baby_name_df=
 ggplot(baby_name_df,aes(x=rank,y=count),main="Relation of Rank and count of Name  Scatter Plot") + 
   geom_point(size=0.5) +
   geom_rug(col="steelblue",alpha=0.1, size=1.5) + ggtitle("Relation of Rank and count of Name  Scatter Plot")
-  #geom_text(label=baby_name_df$childs_first_name,size=3,check_overlap = T)
-#scatterplot(rank ~ count | childs_first_name, data=baby_name_df,
+
 
 
 ```

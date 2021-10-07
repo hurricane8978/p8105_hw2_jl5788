@@ -13,8 +13,6 @@ trash_wheel=
   janitor::clean_names() %>% 
   na.omit(dumpster) %>% 
   mutate(sports_balls=round(sports_balls,0)) 
-  #mutate_at(vars(sports_balls),funs(round(sports_balls,0)))
-  #mutate(sports_balls=round(pull(trash_wheel,sports_balls)))
 ```
 
 ## Read and clean precipatation data for 2018 and 2019
@@ -54,60 +52,47 @@ Mr.Trash Wheel dataset also includes every month’s precipitation data
 for 2018 and 2019, which has 18 rows and 3 columns.
 
 The total precipitation in 2018 is 70.33 and the median number of sports
-balls in a dumpster in 2019 is 8
+balls in a dumpster in 2019 is 8.
 
 # Problem 2
+
+### Import and clean pols-month data
 
 ``` r
 pols_month_df=
   read_csv("data/fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
-  separate(mon,into=c("year","month","day"),sep="-") %>% 
+  separate(mon,into=c("year","month","day"),sep="-") %>%
   mutate(year=as.integer(year),month=as.integer(month),day=as.integer(day)) %>% 
-  mutate(month=month.name[as.numeric(month)]) %>%       
-  mutate(president=ifelse(prez_gop==1,"gop","dem")) %>% 
-  select(!prez_gop & !prez_dem) %>% 
-  
-  
-  
-  
-  select(!day) %>% 
-  filter(!president == "prez_gop",!president == "prez_dem") %>% 
-  mutate(month=substring(month,0,3),year=as.numeric(year))
+  mutate(month.name[month]) %>%
+  select(-month) %>% 
+  rename("month"="month.name[month]") %>% 
+  mutate(president=ifelse(prez_gop==1,"gop","dem")) %>%
+  select(!prez_gop & !prez_dem & !day) %>% 
+  mutate(month=substring(month,0,3),year=as.numeric(year)) %>% 
+  select(year,month,everything()) %>% 
+  mutate(year=as.integer(year))
 ```
 
-    ## Rows: 822 Columns: 9
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## dbl  (8): prez_gop, gov_gop, sen_gop, rep_gop, prez_dem, gov_dem, sen_dem, r...
-    ## date (1): mon
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+### Import and clean snp data
 
 ``` r
 snp_df=
-  read_csv("data/fivethirtyeight_datasets/snp.csv") %>% 
-  separate(date,into=c("year","month","day")) %>% 
-  mutate(month=month.name[as.numeric(month)]) %>% 
-  select(year,everything()) %>% 
-  select(!day) %>% 
-  arrange(year,month) %>% 
-  mutate(year,year=as.numeric(year)+2000)
+  read_csv("data/fivethirtyeight_datasets/snp.csv") %>%
+  mutate(date=lubridate::mdy(date)) %>% 
+  separate(date,into=c("year","month","day"),sep="-") %>% 
+  mutate(year=as.integer(year),month=as.integer(month),day=as.integer(day)) %>% 
+  mutate(month.name[month])%>% 
+  select(-month) %>% 
+  rename("month"="month.name[month]") %>% 
+  mutate(month=substring(month,0,3)) %>% 
+  select(year,month,everything()) %>% 
+  mutate(year=ifelse(year>2049,year-100,year)) %>% 
+  select(year,everything(),-day) %>%
+  arrange(year,month)
 ```
 
-    ## Rows: 787 Columns: 2
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## chr (1): date
-    ## dbl (1): close
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+### Import and clean unemplyment data
 
 ``` r
 unemployment_df=
@@ -115,18 +100,11 @@ unemployment_df=
   pivot_longer(2:13, names_to="month",values_to="unemployment_rate"
   ) %>% 
   janitor::clean_names() %>% 
-  arrange(year,month)
+  arrange(year,month) %>% 
+  mutate(year=as.integer(year))
 ```
 
-    ## Rows: 68 Columns: 13
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## dbl (13): Year, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+### Join three dataset together
 
 ``` r
 merge_snp_unemployment_df1=
@@ -135,6 +113,21 @@ merge_snp_unemployment_df1=
 merge_snp_unemployment_df2=
   left_join(merge_snp_unemployment_df1,unemployment_df,by=c("year","month"))
 ```
+
+After cleaning, the file “pols-month” contains 822 observations of 9
+variables related to the number of national politicians who are
+democratic or republican from 1947 to 2015.
+
+After cleaning, the file “snp” contains 787 observations of 3 variables
+related to Standard & Poor’s stock market index (S&P), often used as a
+representative measure of stock market as a whole.
+
+After cleaning, the file “unemployment” contains 816 observations of 3
+variables.
+
+The three-joint dataset contains 822 observations of 11 variables from
+1947 to 2015. The key variables include president, unemployment rate and
+so on.
 
 ## Problem 3
 
@@ -152,17 +145,6 @@ baby_name_df=
   distinct() %>% 
   arrange(year_of_birth)
 ```
-
-    ## Rows: 19418 Columns: 6
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## chr (3): Gender, Ethnicity, Child's First Name
-    ## dbl (3): Year of Birth, Count, Rank
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ### Well-structured, reader-friendly table
 
@@ -184,17 +166,6 @@ pivot_wider(
     values_from = "rank"
     ) 
 ```
-
-    ## Rows: 19418 Columns: 6
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## chr (3): Gender, Ethnicity, Child's First Name
-    ## dbl (3): Year of Birth, Count, Rank
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ## a table showing the most popular name among male children over time
 
@@ -218,17 +189,6 @@ baby_name_df=
     values_from="childs_first_name"
   ) 
 ```
-
-    ## Rows: 19418 Columns: 6
-
-    ## ─ Column specification ────────────────────────────
-    ## Delimiter: ","
-    ## chr (3): Gender, Ethnicity, Child's First Name
-    ## dbl (3): Year of Birth, Count, Rank
-
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 ## A scatter plot
 
@@ -267,9 +227,4 @@ ggplot(baby_name_df,aes(x=rank,y=count),main="Relation of Rank and count of Name
   geom_rug(col="steelblue",alpha=0.1, size=1.5) + ggtitle("Relation of Rank and count of Name  Scatter Plot")
 ```
 
-![](homework2_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
-
-``` r
-  #geom_text(label=baby_name_df$childs_first_name,size=3,check_overlap = T)
-#scatterplot(rank ~ count | childs_first_name, data=baby_name_df,
-```
+![](homework2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
