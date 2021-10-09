@@ -9,7 +9,7 @@ hurricane
 
 ``` r
 trash_wheel=
-  read_excel("data/trash_wheel_collection.xlsx",range="A2:N408") %>%   
+  read_excel("data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",range="A2:N535") %>%   
   janitor::clean_names() %>% 
   na.omit(dumpster) %>% 
   mutate(sports_balls=round(sports_balls,0)) 
@@ -42,17 +42,17 @@ precip_2018_2019_df=bind_rows(precip2018_df,precip2019_df) %>%
   select(year,month,total) 
 ```
 
-The first sheet of Mr.Trash Wheel dataset includes 344 rows and 14
+The first sheet of Mr.Trash Wheel dataset includes 453 rows and 14
 variables which provide us with information about weight of trash
-collected by Mr.Trash Wheel from May 2014 to June 2019. Furthermore, it
-lists weight of different types of trash which shows in
-plastic\_bottles, polystyrene columns and so on.
+collected by Mr.Trash Wheel from May 2014 to January 2021. Furthermore,
+it lists weight of different types of trash like in seventh and eighth
+columns which shows plastic\_bottles, polystyrene columns and so on.
 
 Mr.Trash Wheel dataset also includes every month’s precipitation data
 for 2018 and 2019, which has 18 rows and 3 columns.
 
 The total precipitation in 2018 is 70.33 and the median number of sports
-balls in a dumpster in 2019 is 8.
+balls in a dumpster in 2019 is 9.
 
 # Problem 2
 

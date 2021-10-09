@@ -16,7 +16,7 @@ library(readxl)
 
 ```{r}
 trash_wheel=
-  read_excel("data/trash_wheel_collection.xlsx",range="A2:N408") %>%   
+  read_excel("data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx",range="A2:N535") %>%   
   janitor::clean_names() %>% 
   na.omit(dumpster) %>% 
   mutate(sports_balls=round(sports_balls,0)) 
@@ -52,7 +52,7 @@ precip_2018_2019_df=bind_rows(precip2018_df,precip2019_df) %>%
 
 ```
 
-The first sheet of Mr.Trash Wheel dataset includes `r nrow(trash_wheel)` rows and `r ncol(trash_wheel)` variables which provide us with information about weight of trash collected by Mr.Trash Wheel from May 2014 to June 2019. Furthermore, it lists weight of different types of trash which shows in `r colnames(trash_wheel[7:8])` columns and so on.
+The first sheet of Mr.Trash Wheel dataset includes `r nrow(trash_wheel)` rows and `r ncol(trash_wheel)` variables which provide us with information about weight of trash collected by Mr.Trash Wheel from May 2014 to January 2021. Furthermore, it lists weight of different types of trash like in seventh and eighth columns which shows `r colnames(trash_wheel[7:8])` columns and so on.
 
 Mr.Trash Wheel dataset also includes every month's precipitation data for 2018 and 2019, which has `r nrow(precip_2018_2019_df) ` rows and `r ncol(precip_2018_2019_df)` columns.
 
@@ -84,6 +84,7 @@ pols_month_df=
   mutate(month=substring(month,0,3),year=as.numeric(year)) %>% 
   select(year,month,everything()) %>% 
   mutate(year=as.integer(year))
+
 ```
   
 ### Import and clean snp data
